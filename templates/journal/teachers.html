@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Учителя и группы — ELZHAS SCHOOL{% endblock %}
+{% block content %}
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">Учителя и группы</h1>
+  <p class="text-sm text-slate-500">Создавайте аккаунты учителям и назначайте им группы</p>
+</div>
+
+{% if error %}
+<div class="bg-red-50 text-red-700 p-4 rounded-xl mb-6 text-sm font-medium">{{ error }}</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+  <!-- Форма создания учителя -->
+  <form method="post" action="{% url 'add_teacher' %}" class="bg-white rounded-2xl p-6 shadow-sm space-y-3">
+    {% csrf_token %}
+    <h2 class="font-bold text-lg">👩‍🏫 Новый учитель (с аккаунтом для входа)</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">ФИО учителя</label>
+        <input type="text" name="full_name" required placeholder="Ерлан Жумабеков" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Предмет</label>
+        <input type="text" name="subject" required placeholder="Математика" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Логин (для входа)</label>
+        <input type="text" name="username" required placeholder="erlan" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Пароль</label>
+        <input type="text" name="password" required placeholder="erlan2026" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-slate-500 mb-1">Телефон</label>
+      <input type="text" name="phone" placeholder="+7 705 000 00 00" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+    </div>
+    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl">
+      + Зарегистрировать учителя
+    </button>
+  </form>
+
+  <!-- Форма создания группы -->
+  <form id="group-form" method="post" action="{% url 'add_group' %}" class="bg-white rounded-2xl p-6 shadow-sm space-y-3">
+    {% csrf_token %}
+    <h2 class="font-bold text-lg">📚 Новая группа</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Название группы</label>
+        <input type="text" name="name" required placeholder="Математика 5 кл" class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Учитель</label>
+        <select name="teacher_id" required class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white">
+          {% for t in all_teachers %}
+            <option value="{{ t.id }}">{{ t.full_name }} ({{ t.subject }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Абонемент (₸/мес)</label>
+        <input type="number" name="monthly_fee" value="25000" required class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 mb-1">Уроков в месяц (авто)</label>
+        <input id="lessons-input" type="number" name="default_lessons" value="12" required class="w-full px-3 py-2 rounded-xl border border-slate-200">
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="flex gap-2 text-xs font-semibold">
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="mon" checked> Пн</label>
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="tue"> Вт</label>
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="wed" checked> Ср</label>
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="thu"> Чт</label>
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="fri" checked> Пт</label>
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="sat"> Сб</label>
+        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" name="sun"> Вс</label>
+      </div>
+      <input type="time" name="lesson_time" value="15:00" class="px-3 py-1.5 rounded-xl border border-slate-200 text-sm">
+    </div>
+    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-xl">
+      + Создать группу
+    </button>
+  </form>
+</div>
+
+<!-- Карточки учителей -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+  {% for item in teachers_data %}
+  <div class="bg-white rounded-2xl p-5 shadow-sm">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <div class="font-bold text-base">{{ item.teacher.full_name }}</div>
+        <div class="text-xs text-slate-500">{{ item.teacher.subject }} · логин: <b class="text-slate-700">{{ item.teacher.user.username }}</b></div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-2 text-center bg-slate-50 rounded-xl p-3 mb-3">
+      <div><b class="block text-sm">{{ item.groups|length }}</b><span class="text-xs text-slate-400">групп</span></div>
+      <div><b class="block text-sm">{{ item.students_count }}</b><span class="text-xs text-slate-400">учеников</span></div>
+      <div><b class="block text-sm text-emerald-600">{{ item.salary }} ₸</b><span class="text-xs text-slate-400">зарплата 40%</span></div>
+    </div>
+    <div class="flex flex-wrap gap-1.5">
+      {% for g in item.groups %}
+        <span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+          {{ g.name }} · {{ g.weekdays_display }} {{ g.lesson_time|time:"H:i" }}
+        </span>
+      {% empty %}
+        <span class="text-xs text-slate-400">Нет групп</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  (function () {
+    const form = document.getElementById('group-form');
+    const lessonsInput = document.getElementById('lessons-input');
+    const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+    function calcLessons() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const checkedDays = new Set();
+      dayNames.forEach((name, idx) => {
+        const cb = form.querySelector(`input[name="${name}"]`);
+        if (cb && cb.checked) checkedDays.add(idx);
+      });
+
+      let count = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (checkedDays.has(new Date(year, month, d).getDay())) count++;
+      }
+      lessonsInput.value = count > 0 ? count : '';
+    }
+
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener('change', calcLessons);
+    });
+    calcLessons();
+  })();
+</script>
+{% endblock %}

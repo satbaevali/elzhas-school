@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Посещаемость — ELZHAS SCHOOL{% endblock %}
+{% block content %}
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">Посещаемость</h1>
+    <p class="text-sm text-slate-500">Отметьте, кто пришёл на урок</p>
+  </div>
+  <form method="get" class="flex items-center gap-2">
+    {% if selected_group %}<input type="hidden" name="group" value="{{ selected_group.id }}">{% endif %}
+    <input type="date" name="date" value="{{ date_str }}" onchange="this.form.submit()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white">
+  </form>
+</div>
+
+<!-- Выбор группы -->
+<div class="flex gap-2 overflow-x-auto pb-3 mb-4">
+  {% for g in groups %}
+    <a href="?group={{ g.id }}&date={{ date_str }}"
+       class="px-4 py-2.5 rounded-xl border text-sm whitespace-nowrap {% if selected_group and g.id == selected_group.id %}bg-emerald-600 text-white border-emerald-600 font-semibold{% else %}bg-white border-slate-200 hover:border-emerald-400{% endif %}">
+      {{ g.name }} <span class="text-xs opacity-75">({{ g.weekdays_display }} · {{ g.lesson_time|time:"H:i" }})</span>
+    </a>
+  {% endfor %}
+</div>
+
+{% if selected_group %}
+<div class="bg-white rounded-2xl p-6 shadow-sm">
+  <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b mb-4">
+    <div>
+      <h2 class="font-bold text-lg">{{ selected_group.name }}</h2>
+      <div class="text-xs text-slate-500">
+        Был: {{ counts.present }} · Не был: {{ counts.absent }} · Уваж.: {{ counts.excused }} · Не отмечено: {{ counts.unmarked }}
+      </div>
+    </div>
+    <form method="post" action="{% url 'mark_all_present' selected_group.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="date" value="{{ date_str }}">
+      <button type="submit" class="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-sm font-semibold">
+        ✓ Все пришли
+      </button>
+    </form>
+  </div>
+
+  <div class="divide-y">
+    {% for row in student_rows %}
+    <div class="py-3 flex items-center justify-between gap-3">
+      <div>
+        <div class="font-semibold">{{ row.student.full_name }}</div>
+        <div class="text-xs text-slate-400">В этом месяце: {{ row.month_present }} из {{ row.lessons_norm }}</div>
+      </div>
+
+      <form method="post" action="{% url 'mark_attendance' row.student.id %}" class="flex gap-1.5">
+        {% csrf_token %}
+        <input type="hidden" name="date" value="{{ date_str }}">
+        <button name="status" value="present" class="px-3 py-1.5 rounded-lg text-xs font-semibold {% if row.status == 'present' %}bg-emerald-600 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-emerald-50{% endif %}">
+          ✓ Был
+        </button>
+        <button name="status" value="absent" class="px-3 py-1.5 rounded-lg text-xs font-semibold {% if row.status == 'absent' %}bg-red-600 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-red-50{% endif %}">
+          ✗ Нет
+        </button>
+        <button name="status" value="excused" class="px-3 py-1.5 rounded-lg text-xs font-semibold {% if row.status == 'excused' %}bg-amber-500 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-amber-50{% endif %}">
+          Уваж.
+        </button>
+      </form>
+    </div>
+    {% empty %}
+    <div class="py-8 text-center text-slate-400">В этой группе пока нет учеников</div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="bg-white rounded-2xl p-8 text-center text-slate-400">Нет доступных групп</div>
+{% endif %}
+
+{% endblock %}

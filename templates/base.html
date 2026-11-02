@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}ELZHAS SCHOOL{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; background: #f4f7f6; }</style>
+</head>
+<body class="text-slate-900 min-h-screen flex flex-col md:flex-row">
+
+  <!-- Верхняя шапка (только на телефоне) -->
+  <header class="md:hidden bg-emerald-900 text-white px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2 font-extrabold">
+      <div class="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center font-black">E</div>
+      <span>ELZHAS SCHOOL</span>
+    </div>
+    <form method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="text-xs bg-white/15 px-3 py-1.5 rounded-lg">Выйти ({{ user.username }})</button>
+    </form>
+  </header>
+
+  <!-- Боковое меню (ПК) -->
+  <aside class="hidden md:flex md:w-64 bg-gradient-to-b from-emerald-950 to-emerald-800 text-emerald-100 flex-col p-5 sticky top-0 h-screen">
+    <div class="flex items-center gap-3 text-white font-extrabold text-lg pb-6">
+      <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black">E</div>
+      <div>ELZHAS SCHOOL<span class="block text-xs font-normal text-emerald-300">Электронный журнал</span></div>
+    </div>
+
+    <nav class="space-y-1 flex-1">
+      <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium {% if page == 'dashboard' %}bg-white/15 text-white{% else %}hover:bg-white/10{% endif %}">
+        🏠 Главная
+      </a>
+      <a href="{% url 'attendance' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium {% if page == 'attendance' %}bg-white/15 text-white{% else %}hover:bg-white/10{% endif %}">
+        ✅ Посещаемость
+      </a>
+      <a href="{% url 'students' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium {% if page == 'students' %}bg-white/15 text-white{% else %}hover:bg-white/10{% endif %}">
+        👥 Ученики
+      </a>
+      {% if user.is_superuser or user.is_staff %}
+      <a href="{% url 'teachers' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium {% if page == 'teachers' %}bg-white/15 text-white{% else %}hover:bg-white/10{% endif %}">
+        🎓 Учителя и группы
+      </a>
+      {% endif %}
+      <a href="{% url 'report' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl font-medium {% if page == 'report' %}bg-white/15 text-white{% else %}hover:bg-white/10{% endif %}">
+        📊 Отчёт и зарплаты
+      </a>
+    </nav>
+
+    <div class="bg-white/10 rounded-xl p-3 flex items-center justify-between">
+      <div class="truncate">
+        <div class="text-white font-semibold text-sm truncate">{{ user.username }}</div>
+        <div class="text-xs text-emerald-300">{% if user.is_superuser or user.is_staff %}Директор{% else %}Учитель{% endif %}</div>
+      </div>
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg">Выйти</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- Контент -->
+  <main class="flex-1 p-4 md:p-8 pb-24 md:pb-8 max-w-6xl w-full mx-auto">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Нижнее меню (Телефон) -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-50">
+    <a href="{% url 'dashboard' %}" class="flex flex-col items-center text-xs font-medium {% if page == 'dashboard' %}text-emerald-600{% else %}text-slate-500{% endif %}">
+      <span class="text-lg">🏠</span>Главная
+    </a>
+    <a href="{% url 'attendance' %}" class="flex flex-col items-center text-xs font-medium {% if page == 'attendance' %}text-emerald-600{% else %}text-slate-500{% endif %}">
+      <span class="text-lg">✅</span>Отметки
+    </a>
+    <a href="{% url 'students' %}" class="flex flex-col items-center text-xs font-medium {% if page == 'students' %}text-emerald-600{% else %}text-slate-500{% endif %}">
+      <span class="text-lg">👥</span>Ученики
+    </a>
+    {% if user.is_superuser or user.is_staff %}
+    <a href="{% url 'teachers' %}" class="flex flex-col items-center text-xs font-medium {% if page == 'teachers' %}text-emerald-600{% else %}text-slate-500{% endif %}">
+      <span class="text-lg">🎓</span>Учителя
+    </a>
+    {% endif %}
+    <a href="{% url 'report' %}" class="flex flex-col items-center text-xs font-medium {% if page == 'report' %}text-emerald-600{% else %}text-slate-500{% endif %}">
+      <span class="text-lg">📊</span>Отчёт
+    </a>
+  </nav>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Отчёт — ELZHAS SCHOOL{% endblock %}
+{% block content %}
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">Отчёт и расчёт 40% / 60%</h1>
+    <p class="text-sm text-slate-500">Вы можете изменить число уроков в месяце — суммы сразу пересчитаются</p>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <form method="get">
+      <input type="month" name="month" value="{{ month }}" onchange="this.form.submit()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white">
+    </form>
+    <a href="{% url 'export_report_excel' %}?month={{ month }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2.5 rounded-xl text-sm">
+      📥 Скачать Excel
+    </a>
+  </div>
+</div>
+
+<!-- Карточки итогов -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-2xl p-5 shadow-sm">
+    <div class="text-xs text-slate-500">Общий доход ({{ month }})</div>
+    <div class="text-2xl font-extrabold mt-1">{{ totals.revenue }} ₸</div>
+  </div>
+  <div class="bg-white rounded-2xl p-5 shadow-sm">
+    <div class="text-xs text-slate-500">Учителям · 40%</div>
+    <div class="text-2xl font-extrabold text-emerald-600 mt-1">{{ totals.teacher }} ₸</div>
+  </div>
+  {% if is_admin %}
+  <div class="bg-white rounded-2xl p-5 shadow-sm">
+    <div class="text-xs text-slate-500">Центру · 60%</div>
+    <div class="text-2xl font-extrabold text-amber-600 mt-1">{{ totals.center }} ₸</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Таблица -->
+<div class="bg-white rounded-2xl p-6 shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm text-left">
+      <thead class="text-xs uppercase text-slate-400 border-b">
+        <tr>
+          <th class="py-3">Группа</th>
+          <th class="py-3">Учитель</th>
+          <th class="py-3">Учеников</th>
+          <th class="py-3">Абонемент</th>
+          <th class="py-3">Уроков в мес.</th>
+          <th class="py-3">Посещений</th>
+          <th class="py-3">Доход</th>
+          <th class="py-3">Учителю 40%</th>
+          {% if is_admin %}<th class="py-3">Центру 60%</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for r in reports %}
+        <tr>
+          <td class="py-3 font-semibold">{{ r.group.name }}</td>
+          <td class="py-3">{{ r.group.teacher.full_name }}</td>
+          <td class="py-3">{{ r.students_count }}</td>
+          <td class="py-3">{{ r.group.monthly_fee }} ₸</td>
+          <td class="py-3">
+            <form method="post" action="{% url 'update_month_lessons' r.group.id %}" class="flex items-center gap-1">
+              {% csrf_token %}
+              <input type="hidden" name="month" value="{{ month }}">
+              <input type="number" name="lessons" value="{{ r.lessons_norm }}" min="1" max="31"
+                     onchange="this.form.submit()"
+                     class="w-16 px-2 py-1 text-center rounded-lg border border-slate-200">
+            </form>
+          </td>
+          <td class="py-3">{{ r.visits }}</td>
+          <td class="py-3 font-bold">{{ r.revenue }} ₸</td>
+          <td class="py-3 font-semibold text-emerald-600">{{ r.teacher_share }} ₸</td>
+          {% if is_admin %}<td class="py-3 font-semibold text-amber-600">{{ r.center_share }} ₸</td>{% endif %}
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="py-8 text-center text-slate-400">Нет данных за выбранный месяц</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="bg-emerald-50 font-bold">
+        <tr>
+          <td class="py-3 px-2" colspan="2">ИТОГО</td>
+          <td class="py-3">{{ totals.students }}</td>
+          <td></td>
+          <td></td>
+          <td class="py-3">{{ totals.visits }}</td>
+          <td class="py-3">{{ totals.revenue }} ₸</td>
+          <td class="py-3 text-emerald-700">{{ totals.teacher }} ₸</td>
+          {% if is_admin %}<td class="py-3 text-amber-700">{{ totals.center }} ₸</td>{% endif %}
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

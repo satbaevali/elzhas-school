@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: elzhas_db
+      POSTGRES_USER: elzhas_user
+      POSTGRES_PASSWORD: elzhas_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: elzhas-prod-secret-key
+      DEBUG: "False"
+      ALLOWED_HOSTS: "127.0.0.1,localhost"
+      POSTGRES_DB: elzhas_db
+      POSTGRES_USER: elzhas_user
+      POSTGRES_PASSWORD: elzhas_pass
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
